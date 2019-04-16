@@ -1,4 +1,4 @@
-from lxml import etree
+from lxml import etree, html
 import requests
 
 
@@ -10,11 +10,23 @@ def get_courses_list():
         yield course_url_tag.getchildren().pop().text
 
 
-def get_course_info(course_slug):
-#//*[@id="root"]/div[1]/div/div[1]/div[1]/div[1]/div/div/div[1]/div[2]/h1
-#<h1 class="H2_1pmnvep-o_O-weightNormal_s9jwp5-o_O-fontHeadline_1uu0gyz max-text-width-xl m-b-1s" data-reactid="207">Игрофикация</h1>
-#<h1 class="H2_1pmnvep-o_O-weightNormal_s9jwp5-o_O-fontHeadline_1uu0gyz max-text-width-xl m-b-1s" data-reactid="213">FinTech Disruptive Innovation: Implications for Society</h1>
-    pass
+def get_course_info(course_url):
+    # html.parse don't work correctly
+    page = requests.get(course_url).text.encode('utf-8')
+    tree = html.fromstring(page)
+    course_title = tree.xpath(
+        './/*[@id="root"]/div[1]/div/div[1]/div[1]/div[1]/div/div/div[1]/div[2]/h1'
+        )[0].text_content().encode('utf-8')
+    print(course_title)
+    course_language = tree.xpath(
+        './/*[@id="root"]/div[1]/div/div[2]/div/div/div[2]/div[1]/div[2]/div[4]/div[2]/h4'
+        ).pop().text_content().encode('utf-8')
+    print(course_language)
+    course_begin = tree.xpath(
+        './/*[@id="start-date-string"]/span'
+        )#.pop().text_content().encode('utf-8')
+    print(course_begin)
+    # return course_title, course_language, course_begin
 
 
 def output_courses_info_to_xlsx(filepath):
@@ -23,4 +35,5 @@ def output_courses_info_to_xlsx(filepath):
 
 if __name__ == '__main__':
     for course_url in get_courses_list():
-        
+        get_course_info(course_url)
+        break
