@@ -47,27 +47,27 @@ def get_course_duration(course):
         return None
 
 
+def get_course_rating(course):
+    try:
+        return course['aggregateRating']['ratingValue']
+    except KeyError:
+        return None
+
+
 def get_course_info(course_url):
     course_info = get_full_course_info(course_url)
     if not course_info:
         return []
-
     for course_elem in course_info['@graph']:
         if course_elem['@type'] == 'Product':
             course_product = course_elem
         if course_elem['@type'] == 'Course':
             course_course = course_elem
-
-    try:
-        course_rating = course_product['aggregateRating']['ratingValue']
-    except KeyError:
-        course_rating = None
-
     return [
         course_product['name'],
         course_course['inLanguage'],
         course_product['offers']['validFrom'],
-        course_rating,
+        get_course_rating(course_product),
         get_course_duration(course_course)
     ]
 
