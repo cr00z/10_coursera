@@ -102,7 +102,6 @@ if __name__ == '__main__':
     course_index = 1
     for course_url in get_courses_list():
         if course_index >= args.start:
-            print(course_url, end=' ')
             course_info = get_course_info(course_url)
             course_info = [course_index, course_url] + course_info
             print(*course_info)
