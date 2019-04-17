@@ -12,7 +12,7 @@ Load [Coursera XML feed](https://www.coursera.org/sitemap~www~courses.xml), dump
 
 and save it into xlsx file.
 
-You may stop a little, use *--start* and *--limit* options for continue (Please note: xml feed may change).
+You may stop a little, use *--start* and *--limit* options for continue (please note: xml feed may change).
 
 # How to Install
 
