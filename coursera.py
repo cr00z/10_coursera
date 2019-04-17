@@ -17,10 +17,7 @@ def get_courses_list():
         yield course_url_tag.getchildren().pop().text
 
 
-def get_course_info(course_url):
-    DAYS_IN_WEEK = 7
-    WEEK_CORRECTION = 1
-
+def get_full_course_info(course_url):
     course_page = requests.get(course_url)
     course_soup = BeautifulSoup(course_page.content, 'lxml')
     try:
@@ -29,8 +26,31 @@ def get_course_info(course_url):
             attrs={'type': 'application/ld+json'}
         ).string
     except AttributeError:
+        return None
+    return json.loads(course_json_str)
+
+
+def get_course_duration(course):
+    days_in_week = 7
+    week_correction = 1
+    try:
+        start_date = datetime.strptime(
+            course['hasCourseInstance']['startDate'],
+            '%Y-%m-%d'
+        )
+        end_date = datetime.strptime(
+            course['hasCourseInstance']['endDate'],
+            '%Y-%m-%d'
+        )
+        return (end_date - start_date).days // 7 - week_correction
+    except KeyError:
+        return None
+
+
+def get_course_info(course_url):
+    course_info = get_full_course_info(course_url)
+    if not course_info:
         return []
-    course_info = json.loads(course_json_str)
 
     for course_elem in course_info['@graph']:
         if course_elem['@type'] == 'Product':
@@ -43,25 +63,12 @@ def get_course_info(course_url):
     except KeyError:
         course_rating = None
 
-    try:
-        start_date = datetime.strptime(
-            course_course['hasCourseInstance']['startDate'],
-            '%Y-%m-%d'
-        )
-        end_date = datetime.strptime(
-            course_course['hasCourseInstance']['endDate'],
-            '%Y-%m-%d'
-        )
-        course_duration = (end_date - start_date).days // DAYS_IN_WEEK - WEEK_CORRECTION
-    except KeyError:
-        course_duration = None
-
     return [
         course_product['name'],
         course_course['inLanguage'],
         course_product['offers']['validFrom'],
         course_rating,
-        course_duration
+        get_course_duration(course_course)
     ]
 
 
