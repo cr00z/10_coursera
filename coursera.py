@@ -99,6 +99,12 @@ def get_cmdline_args():
         default=1,
         help='course to start'
     )
+    parser.add_argument(
+        '-v',
+        '--verbose',
+        action='store_true',
+        help='show results in console'
+    )
     return parser.parse_args()
 
 
@@ -111,7 +117,8 @@ if __name__ == '__main__':
         if course_index >= args.start:
             course_info = get_course_info(course_url)
             course_info = [course_index, course_url] + course_info
-            print(*course_info)
+            if args.verbose:
+                print(*course_info)
             output_course_info_to_xlsx(args.xlsx_path, course_info)
         course_index += 1
         if course_index == args.start + args.limit:
