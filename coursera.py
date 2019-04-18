@@ -9,17 +9,21 @@ from datetime import datetime
 import re
 
 
-def get_courses_list():
-    coursera_link = 'https://www.coursera.org/sitemap~www~courses.xml'
-    coursera_xml = requests.get(coursera_link).content
-    coursera_xml_root = lxml.etree.fromstring(coursera_xml)
+COURSERA_LINK = 'https://www.coursera.org/sitemap~www~courses.xml'
+
+
+def get_url_content(url):
+    return requests.get(url).content
+
+
+def get_courses_list_from_xml(coursera_xml_content):
+    coursera_xml_root = lxml.etree.fromstring(coursera_xml_content)
     for course_url_tag in coursera_xml_root.getchildren():
         yield course_url_tag.getchildren().pop().text
 
 
-def get_full_course_info(course_url):
-    course_page = requests.get(course_url)
-    course_soup = BeautifulSoup(course_page.content, 'lxml')
+def get_full_course_info(course_content):
+    course_soup = BeautifulSoup(course_content, 'lxml')
     try:
         course_json_str = course_soup.find(
             'script',
@@ -63,22 +67,23 @@ def get_course_info(course_url):
             course_product = course_elem
         if course_elem['@type'] == 'Course':
             course_course = course_elem
-    return [
-        course_product['name'],
-        course_course['inLanguage'],
-        course_product['offers']['validFrom'],
-        get_course_rating(course_product),
-        get_course_duration(course_course)
-    ]
+    return {
+        'name': course_product['name'],
+        'language': course_course['inLanguage'],
+        'start': course_product['offers']['validFrom'],
+        'rating': get_course_rating(course_product),
+        'duration': get_course_duration(course_course)
+    }
 
 
-def output_course_info_to_xlsx(filepath, course_info):
+def output_courses_info_to_xlsx(filepath, courses_info):
     if os.path.exists(filepath):
         work_book = openpyxl.load_workbook(filepath)
     else:
         work_book = openpyxl.Workbook()
     work_sheet = work_book.active
-    work_sheet.append(course_info)
+    for course_info in courses_info:
+        work_sheet.append(convert_course_info_to_list(course_info))
     work_book.save(filepath)
 
 
@@ -108,18 +113,33 @@ def get_cmdline_args():
     return parser.parse_args()
 
 
+def convert_course_info_to_list(course_info):
+    return [
+        course_info['index'],
+        course_info['url'],
+        course_info['name'],
+        course_info['language'],
+        course_info['start'],
+        course_info['rating'],
+        course_info['duration']
+    ]
+
+    
 if __name__ == '__main__':
     args = get_cmdline_args()
     if not re.fullmatch(r'.*(\.xlsx|\.xlsm|\.xltx|\.xltm)$', args.xlsx_path):
         exit('Supported formats are: .xlsx,.xlsm,.xltx,.xltm')
+    courses_info = []
     course_index = 1
-    for course_url in get_courses_list():
+    for course_url in get_courses_list_from_xml(get_url_content(COURSERA_LINK)):
         if course_index >= args.start:
-            course_info = get_course_info(course_url)
-            course_info = [course_index, course_url] + course_info
+            course_info = get_course_info(get_url_content(course_url))
+            course_info['index'] = course_index
+            course_info['url'] = course_url
             if args.verbose:
-                print(*course_info)
-            output_course_info_to_xlsx(args.xlsx_path, course_info)
-        course_index += 1
+                print(*convert_course_info_to_list(course_info))
+            courses_info.append(course_info)
+            course_index += 1
         if course_index == args.start + args.limit:
             break
+    output_courses_info_to_xlsx(args.xlsx_path, courses_info)
