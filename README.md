@@ -38,7 +38,7 @@ Example of script launch on Linux, Python 3.5:
 
 ```bash
 
-$ python coursera.py result.xlsx --start 777 --limit 3
+$ python coursera.py result.xlsx --start 777 --limit 3 -v
 777 https://www.coursera.org/learn/gcp-big-data-ml-fundamentals-es Google Cloud Platform Big Data and Machine Learning Fundamentals en Español es 2019-04-17 4.6 1
 778 https://www.coursera.org/learn/mecanique-solide Mécanique : Solide Indéformable fr 2019-04-17 4.8 5
 779 https://www.coursera.org/learn/develop-windows-apps-gcp Develop and Deploy Windows Applications on Google Cloud Platform en 2019-04-17 4.4 1
