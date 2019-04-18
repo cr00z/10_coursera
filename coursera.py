@@ -61,7 +61,7 @@ def get_course_rating(course):
 def get_course_info(course_url):
     course_info = get_full_course_info(course_url)
     if not course_info:
-        return []
+        return dict().fromkeys(['name', 'language', 'start', 'rating', 'duration'])
     for course_elem in course_info['@graph']:
         if course_elem['@type'] == 'Product':
             course_product = course_elem
@@ -129,6 +129,11 @@ def is_excel_file_ext(xlsx_path):
     return re.fullmatch(r'.*(\.xlsx|\.xlsm|\.xltx|\.xltm)$', xlsx_path)
 
 
+def print_debug_course_info(course_info, verbose):
+    if verbose:
+        print(*convert_course_info_to_list(course_info))
+
+
 if __name__ == '__main__':
     args = get_cmdline_args()
     if not is_excel_file_ext(args.xlsx_path): 
@@ -144,7 +149,6 @@ if __name__ == '__main__':
         course_info = get_course_info(get_url_content(course_url))
         course_info['index'] = course_index
         course_info['url'] = course_url
-        if args.verbose:
-            print(*convert_course_info_to_list(course_info))
+        print_debug_course_info(course_info, args.verbose)
         courses_info.append(course_info)
     output_courses_info_to_xlsx(args.xlsx_path, courses_info)
