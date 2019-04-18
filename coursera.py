@@ -124,22 +124,27 @@ def convert_course_info_to_list(course_info):
         course_info['duration']
     ]
 
-    
+
+def is_excel_file_ext(xlsx_path):
+    return re.fullmatch(r'.*(\.xlsx|\.xlsm|\.xltx|\.xltm)$', xlsx_path)
+
+
 if __name__ == '__main__':
     args = get_cmdline_args()
-    if not re.fullmatch(r'.*(\.xlsx|\.xlsm|\.xltx|\.xltm)$', args.xlsx_path):
+    if not is_excel_file_ext(args.xlsx_path): 
         exit('Supported formats are: .xlsx,.xlsm,.xltx,.xltm')
     courses_info = []
-    course_index = 1
+    course_index = 0
     for course_url in get_courses_list_from_xml(get_url_content(COURSERA_LINK)):
-        if course_index >= args.start:
-            course_info = get_course_info(get_url_content(course_url))
-            course_info['index'] = course_index
-            course_info['url'] = course_url
-            if args.verbose:
-                print(*convert_course_info_to_list(course_info))
-            courses_info.append(course_info)
-            course_index += 1
+        course_index += 1
+        if course_index < args.start:
+            continue
         if course_index == args.start + args.limit:
             break
+        course_info = get_course_info(get_url_content(course_url))
+        course_info['index'] = course_index
+        course_info['url'] = course_url
+        if args.verbose:
+            print(*convert_course_info_to_list(course_info))
+        courses_info.append(course_info)
     output_courses_info_to_xlsx(args.xlsx_path, courses_info)
